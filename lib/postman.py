@@ -10,26 +10,30 @@ from urllib.parse import urlencode
 from mitmproxy import ctx
 
 HOST_FILTER_PARAM = "host_filter"
+PATH_FILTER_PARAM = "path_filter"
 COLLECTION_NAME_PARAM = "collection_name"
 
 def load(l):
     l.add_option(HOST_FILTER_PARAM, str, "example.com", "Host filter option")
+    l.add_option(PATH_FILTER_PARAM, str, "/people/me", "Path filter option")
     l.add_option(COLLECTION_NAME_PARAM, str, "collection_name", "Collection name option")
 
 def configure(updated):
-    if HOST_FILTER_PARAM in updated or COLLECTION_NAME_PARAM in updated :
+    if HOST_FILTER_PARAM in updated or COLLECTION_NAME_PARAM in updated or PATH_FILTER_PARAM in updated :
         ctx.log.info("host filter : " + ctx.options.host_filter)
+        ctx.log.info("path filter : " + ctx.options.path_filter)
         ctx.log.info("collection name : " + ctx.options.collection_name)
         global addons
-        addons = [Postman(ctx.options.host_filter, ctx.options.collection_name)]
+        addons = [Postman(ctx.options.host_filter, ctx.options.path_filter, ctx.options.collection_name)]
 
 class Postman:
-    def __init__(self, host, collection_name='TestCollection'):
+    def __init__(self, host, path='' , collection_name='TestCollection'):
         """
         :param host: Host for which we are creating the Postman collection
         :param collection_name: Name of the collection
         """
         self.host = host
+        self.path = path
         self.collection = Collection(name=collection_name)
         self.folder_dict = {}
 
@@ -42,6 +46,9 @@ class Postman:
         """
         if flow.request.host != self.host:
             return
+        if self.path not in flow.request.path:
+            return
+
         headers = {}
         for k, v in flow.request.headers.items():
             if k != 'Content-Length':

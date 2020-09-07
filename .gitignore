@@ -1,1 +1,13 @@
 .idea/
+
+# For Mac OS
+.DS_Store
+
+# Python
+__pycache__/
+
+# Personal notes
+my_notes.*
+
+# Generated collections
+/*.json
